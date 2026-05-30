@@ -1,0 +1,4 @@
+{{ with hugo.Data.config.discuss_domain }}
+{{ $search_url := print "https://bsky.app/search?q=domain%3A" . $.RelPermalink }}
+<a href="{{ $search_url | safeURL }}" target="_blank" rel="noopener noreferrer">{{ i18n "discuss" | default "Thảo luận" }}</a>
+{{ end }}

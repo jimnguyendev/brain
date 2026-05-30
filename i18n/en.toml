@@ -1,0 +1,69 @@
+[404_message]
+other = "Ơ! Bạn hơi lạc đường rồi. Trang này không tồn tại (hoặc đang ở chế độ riêng tư)."
+
+[404_back]
+other = "↳ Về trang chủ nào."
+
+[all_posts]
+other = "Tất cả {{.Title}}"
+
+[last_updated]
+other = "Cập nhật lần cuối"
+
+[notes_count]
+other = "ghi chú có thẻ này"
+
+[first_10]
+other = "hiển thị 10 kết quả đầu"
+
+[tag]
+other = "Thẻ"
+
+[backlinks]
+other = "Liên kết ngược"
+
+[no_backlinks]
+other = "Chưa có liên kết ngược"
+
+[home]
+other = "Trang chủ"
+
+[light_mode]
+other = "Chế độ sáng"
+
+[dark_mode]
+other = "Chế độ tối"
+
+[newsletter_icon]
+other = "Bản tin"
+
+
+[edit_source]
+other = "Sửa nguồn"
+
+[interactive_graph]
+other = "Đồ thị tương tác"
+
+[search]
+other = "Tìm kiếm"
+
+[search_icon]
+other = "Biểu tượng tìm kiếm"
+
+[icon_search]
+other = "Biểu tượng để mở tìm kiếm"
+
+[recent_notes]
+other = "Ghi chú gần đây"
+
+[first_3_notes]
+other = "3 {{ .notes }} đầu tiên"
+
+[search_for_something]
+other = "Tìm gì đó..."
+
+[toc]
+other = "Mục lục"
+
+[copyright]
+other = "<a href=\"https://github.com/jimnguyendev\">{{ .name }} </a>, © {{ .year }}"

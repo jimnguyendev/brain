@@ -1,0 +1,450 @@
+<!-- set data/config yaml file based on website language -->
+{{ $config := cond (eq $.Site.Language.Lang "en") "config" (printf "config.%s" $.Site.Language.Lang) }}
+{{ $data := index hugo.Data $config }}
+<!-- Clean description: prioritize manual fields, clean wikilinks from .Summary -->
+{{ $cleanDescription := "" }}
+{{ if .IsHome }}
+  {{ $cleanDescription = $data.description | default hugo.Data.config.description }}
+{{ else }}
+  {{ if .Params.ogdescription }}
+    {{ $cleanDescription = .Params.ogdescription }}
+  {{ else if .Params.description }}
+    {{ $cleanDescription = .Params.description }}
+  {{ else }}
+    {{ $summary := .Summary }}
+    {{ $summary = replaceRE `\[([^\]]+)\]\([^\)]+\)` "$1" $summary }}
+    {{ $summary = replaceRE `\[\[([^\]|]+)\|([^\]]+)\]\]` "$2" $summary }}
+    {{ $summary = replaceRE `\[\[([^\]|]+)\]\]` "$1" $summary }}
+    {{ $summary = replaceRE `\*\*|__|\*|_|~~` "" $summary }}
+    {{ $summary = replaceRE "(?:^|\\s)[-*+>]\\s+" " " $summary }}
+    {{ $summary = replaceRE "(?:^|\\s)\\d+\\.\\s+" " " $summary }}
+    {{ $summary = replaceRE `\s+` " " $summary }}
+    {{ $cleanDescription = strings.TrimSpace $summary }}
+  {{ end }}
+{{ end }}
+<!-- find correct hero image path, either a manual created _img/feature (1. prio) or otherwise part of content with name of image (2.), or auto-generated (3.) -->
+{{ $ogImagePath := "" }}
+{{ $base := $.Site.BaseURL }}
+{{ if .Params.Ogimage }}
+  {{ $featurePath := printf "content/_img/feature/%s" .Params.Ogimage }}
+  {{ $rootPath := printf "content/%s" .Params.Ogimage }}
+  {{ if fileExists $featurePath }}
+    {{ $ogImagePath = printf "%s_img/feature/%s" $base .Params.Ogimage }}
+  {{ else if fileExists $rootPath }}
+    {{ $ogImagePath = printf "%s%s" $base .Params.Ogimage }}
+  {{ else if .File }}
+    {{ $genPath := printf "content/_img/feature/gen/%s" (.File.BaseFileName | urlize) }}
+    {{ $genPathWebp := printf "%s.webp" $genPath }}
+    {{ if fileExists $genPathWebp }}
+      {{ $ogImagePath = printf "%s_img/feature/gen/%s.webp" $base (.File.BaseFileName | urlize) }}
+    {{ else }}
+      {{ $ogImagePath = printf "%s_img/feature/second-brain.jpeg" $base }}
+    {{ end }}
+  {{ else }}
+    {{ $ogImagePath = printf "%s_img/feature/second-brain.jpeg" $base }}
+  {{ end }}
+{{ else if .File }}
+  {{ $genPath := printf "content/_img/feature/gen/%s" (.File.BaseFileName | urlize) }}
+  {{ $genPathWebp := printf "%s.webp" $genPath }}
+  {{ if fileExists $genPathWebp }}
+    {{ $ogImagePath = printf "%s_img/feature/gen/%s.webp" $base (.File.BaseFileName | urlize) }}
+  {{ else }}
+    {{ $ogImagePath = printf "%s_img/feature/second-brain.jpeg" $base }}
+  {{ end }}
+{{ else }}
+  {{ $ogImagePath = printf "%s_img/feature/second-brain.jpeg" $base }}
+{{ end }}
+<!-- Determine Twitter card type: use summary_large_image only for generated images and known wide images -->
+{{ $twitterCardType := "summary" }}
+{{ if or (strings.Contains $ogImagePath "/gen/") (strings.Contains $ogImagePath "/mermaid/") (strings.HasSuffix $ogImagePath "second-brain.jpeg") }}
+  {{ $twitterCardType = "summary_large_image" }}
+{{ end }}
+
+<head>
+  <!-- Meta tags -->
+  <meta charset="UTF-8" />
+  <meta
+    name="description"
+    content="{{ $cleanDescription }}"
+  />
+  <meta property="og:title" content="{{ .Title }}">
+  <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+  <meta property="og:image" content="{{ $ogImagePath }}">
+  <meta property="og:width" content="{{ if .Params.Ogwidth }}{{ .Params.Ogwidth }}{{ else }}1024{{ end }}"> <!--this and below need to be changed to second-brain.jpeg-->
+  <meta property="og:height" content="{{ if .Params.Ogheight }}{{ .Params.Ogheight }}{{ else }}763{{ end }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+  <meta property="og:description" content="{{ $cleanDescription }}">
+  <meta property="og:site_name" content="Simon Späti's Second Brain">
+  <meta property="og:locale" content="en_US">
+  {{ if .IsPage }}
+  {{ if .Params.createddate }}<meta property="article:published_time" content="{{ .Params.createddate }}T00:00:00Z">{{ end }}
+  {{ if .Lastmod }}<meta property="article:modified_time" content="{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
+  <meta property="article:author" content="https://www.ssp.sh/about/">
+  {{ range .Params.tags }}<meta property="article:tag" content="{{ . }}">{{ end }}
+  {{ end }}
+  <meta name="twitter:card" content="{{ $twitterCardType }}" />
+  <meta name="twitter:site" content="@sspaeti" />
+  <meta name="twitter:title" content="{{ .Title }}" />
+  <meta name="twitter:description" content="{{ $cleanDescription }}" />
+  <meta property="twitter:image" content="{{ $ogImagePath }}">
+  <meta name="author" content="{{ $.Site.Params.author | default "Simon Späti" }}">
+  {{ if .IsPage }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": {{ .Title | jsonify }},
+    {{ if .Params.createddate }}"datePublished": "{{ .Params.createddate }}T00:00:00Z",{{ end }}
+    {{ if .Lastmod }}"dateModified": {{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" | jsonify }},{{ end }}
+    "author": {
+      "@type": "Person",
+      "name": "Simon Späti",
+      "url": "https://www.ssp.sh/about/"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Simon Späti"
+    },
+    "description": {{ $cleanDescription | jsonify }},
+    "image": "{{ $ogImagePath }}",
+    "url": {{ .Permalink | jsonify }}
+  }
+  </script>
+  {{ end }}
+  <title>
+    {{ if .Title }}{{ .Title }}{{ else }}{{ $data.page_title | default hugo.Data.config.page_title | plainify }}{{
+    end }}
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- HTML Favicon -->
+  {{ $favicon := $data.favicon  | default hugo.Data.config.favicon | default (slice (dict "rel" "shortcut icon" "type" "image/png" "href" "icon.png")) }}
+  {{ $type := (printf "%T" $favicon) }}
+  {{ if eq $type "string" }}
+  {{ $favicon | safeHTML }}
+  {{ else }}
+  {{ range $favicon }}
+  <link rel="{{.rel}}" {{if .type}}type="{{.type}}"{{end}} {{if .sizes}}sizes="{{.sizes}}"{{end}} href="{{$.Site.BaseURL}}/{{.href}}" />
+  {{- end }}
+  {{ end }}
+
+  {{ if .Params.canonicalUrl }}
+  <link rel="canonical" class="u-url" href="{{ .Params.canonicalUrl }}">
+  {{ else }}
+  <link rel="canonical" class="u-url" href="{{ .Permalink }}">
+  {{ end }}
+
+  <!-- CSS Stylesheets and Fonts -->
+  {{$sass := resources.Match "styles/[!_]*.scss" }}
+  {{$css := slice }}
+  {{range $sass}}
+  {{$scss := . | css.Sass (dict "outputStyle" "compressed") }}
+  {{$css = $css | append $scss}}
+  {{end}}
+  {{if $data.enableCallouts | default hugo.Data.config.enableCallouts}}
+    {{$scss := resources.Get "styles/_callouts.scss" | css.Sass (dict "outputStyle" "compressed") }}
+    {{$css = $css | append $scss}}
+  {{end}}
+  {{$finalCss := $css | resources.Concat "styles.css" | resources.Fingerprint "md5" | resources.Minify  }}
+  <link href="{{$finalCss.Permalink}}" rel="stylesheet" />
+
+  {{$lightSyntax := resources.Get "styles/_light_syntax.scss" | css.Sass (dict "outputStyle" "compressed") | resources.Fingerprint "md5" | resources.Minify  }}
+  <link href="{{$lightSyntax.Permalink}}" rel="stylesheet" id="theme-link">
+   <!-- Base scripts -->
+  {{$scripts := (slice "js/darkmode.js" "js/util.js")}}
+  {{range $scripts}}
+  {{$scriptname := .}}
+  {{ $s := resources.Get $scriptname | resources.ExecuteAsTemplate $scriptname . | resources.Fingerprint "md5" | resources.Minify }}
+  <script src="{{$s.Permalink}}"></script>
+  {{end}}
+  {{partial "katex.html" .}}
+    
+  <!-- unpg.com had outages -->
+  <!-- <script src="https://unpkg.com/@floating-ui/core@0.7.3"></script> -->
+  <!-- <script src="https://unpkg.com/@floating-ui/dom@0.5.4"></script> -->
+  <!-- jsdelivr is a backup -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@floating-ui/core@0.7.3"></script> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@0.5.4"></script> -->
+  <!-- but I moved them locally now: -->
+  {{ $floatingUICore := resources.Get "js/floating-ui.core.umd.min.js" | resources.Fingerprint "md5" }}
+  {{ $floatingUIDOM := resources.Get "js/floating-ui.dom.umd.min.js" | resources.Fingerprint "md5" }}
+  <script src="{{ $floatingUICore.RelPermalink }}"></script>
+  <script src="{{ $floatingUIDOM.RelPermalink }}"></script>
+
+
+  {{ $popover := resources.Get "js/popover.js" | resources.Fingerprint "md5" |
+  resources.Minify }}
+  <script src="{{$popover.Permalink}}"></script>
+
+  <!-- Optional scripts -->
+
+  {{ if $data.enableCodeBlockTitle | default hugo.Data.config.enableCallouts }}
+  {{ $codeTitle := resources.Get "js/code-title.js" | resources.Fingerprint "md5" | resources.Minify }}
+  <script src="{{$codeTitle.Permalink}}"></script>
+  {{end}}
+
+  {{ if $data.enableCodeBlockCopy | default hugo.Data.config.enableCodeBlockCopy }}
+  {{ $clipboard := resources.Get "js/clipboard.js" | resources.Fingerprint "md5" | resources.Minify }}
+  <script src="{{$clipboard.Permalink}}"></script>
+  {{ end }}
+
+  {{ if $data.enableCallouts | default hugo.Data.config.enableCallouts }}
+  {{ $callouts := resources.Get "js/callouts.js" | resources.Fingerprint "md5" | resources.Minify }}
+  <script src="{{$callouts.Permalink}}"></script>
+  {{ end }}
+
+  <!--  Preload page vars  -->
+  {{$linkIndex := resources.Get "indices/linkIndex.json" | resources.Fingerprint
+  "md5" | resources.Minify | }} {{$contentIndex := resources.Get
+  "indices/contentIndex.json" | resources.Fingerprint "md5" | resources.Minify
+  }}
+  <script>
+    const BASE_URL = {{.Site.BaseURL}}
+    const fetchData = Promise.all([
+          fetch("{{ $linkIndex.Permalink }}")
+            .then(data => data.json())
+            .then(data => ({
+              index: data.index,
+              links: data.links,
+            })),
+          fetch("{{ $contentIndex.Permalink }}")
+            .then(data => data.json()),
+        ])
+        .then(([{index, links}, content]) => ({
+          index,
+          links,
+          content,
+        }))
+
+      const render = () => {
+      // NOTE: everything within this callback will be executed for every page navigation. This is a good place to put JavaScript that loads or modifies data on the page, adds event listeners, etc. If you are only dealing with basic DOM replacement, use the init function
+
+      const siteBaseURL = new URL(BASE_URL);
+      const pathBase = siteBaseURL.pathname;
+      const pathWindow = window.location.pathname;
+      const isHome = pathBase == pathWindow;
+
+      {{if $data.enableCodeBlockCopy | default hugo.Data.config.enableCodeBlockCopy -}}
+      addCopyButtons();
+      {{ end }}
+
+      {{if $data.enableSPA | default hugo.Data.config.enableSPA -}}
+      addTitleToCodeBlocks();
+      {{ end }}
+
+      {{if $data.enableCallouts | default hugo.Data.config.enableCallouts -}}
+      addCollapsibleCallouts();
+      {{ end }}
+     
+      {{if $data.enableLinkPreview | default hugo.Data.config.enableLinkPreview}}
+      initPopover(
+        {{strings.TrimRight "/" .Site.BaseURL }},
+        {{$data.enableContextualBacklinks | default hugo.Data.config.enableContextualBacklinks}},
+        {{$data.enableLatex | default hugo.Data.config.enableLatex}}
+      )
+      {{end}}
+      
+      // Initialize mermaid diagrams if they exist on the page
+      if (window.initMermaid) {
+        window.initMermaid();
+      }
+
+      {{if $data.enableFooter | default hugo.Data.config.enableFooter}}
+      const footer = document.getElementById("footer")
+      if (footer) {
+        const container = document.getElementById("graph-container")
+        // retry if the graph is not ready
+        if (!container) return requestAnimationFrame(render)
+        // clear the graph in case there is anything within it
+        container.textContent = ""
+
+        const drawGlobal = isHome && {{hugo.Data.graphConfig.enableGlobalGraph}};
+        window.__graphBaseUrl = {{strings.TrimRight "/" .Site.BaseURL}};
+        window.__graphPathColors = {{hugo.Data.graphConfig.paths}};
+        window.__graphConfig = drawGlobal ? {{hugo.Data.graphConfig.globalGraph}} : {{hugo.Data.graphConfig.localGraph}};
+        drawGraph(
+            {{strings.TrimRight "/" .Site.BaseURL}},
+            drawGlobal,
+            window.__graphPathColors,
+            window.__graphConfig
+          );
+
+        }
+      {{end}}
+    }
+
+    const init = (doc = document) => {
+      // NOTE: everything within this callback will be executed for initial page navigation. This is a good place to put JavaScript that only replaces DOM nodes.
+      {{if $data.enableCodeBlockCopy | default hugo.Data.config.enableCodeBlockCopy -}}
+      addCopyButtons();
+      {{ end }}
+
+      {{if $data.enableCodeBlockTitle | default hugo.Data.config.enableCodeBlockTitle -}}
+      addTitleToCodeBlocks();
+      {{- end -}}
+      {{if $data.enableLatex | default hugo.Data.config.enableLatex}}
+      renderMathInElement(doc.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+        ],
+        throwOnError : false
+      });
+      {{end}}
+      
+      // Initialize mermaid diagrams if they exist on the page
+      if (window.initMermaid) {
+        window.initMermaid();
+      }
+    };
+  </script>
+  {{if $data.enableSPA | default hugo.Data.config.enableSPA}}
+  {{ $router := resources.Get "js/router.js" | resources.Fingerprint "md5" |
+  resources.Minify }}
+  <script type="module">
+    import { attachSPARouting } from "{{$router.Permalink}}"
+    attachSPARouting(init, render)
+  </script>
+  {{else}}
+  <script>
+    window.Million = {
+      navigate: (url) => (window.location.href = url),
+      prefetch: () => {},
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      init()
+      render()
+    })
+  </script>
+  {{end}}
+    {{- /* GoatCounter */ -}}
+    {{if $data.enableGoatCounter | default false}}
+      {{ partial "goat-counter.html" (dict "goatCounterUser" $data.goatCounterUser) }}
+    {{end}}
+  <!-- Mermaid: lazy-loaded only when diagrams are detected -->
+  <script type="module">
+    let mermaidLib = null;
+    let isRendering = false;
+
+    function getCurrentTheme() {
+      const saved = document.documentElement.getAttribute('saved-theme');
+      if (saved) return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    async function loadMermaid() {
+      if (!mermaidLib) {
+        const module = await import('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs');
+        mermaidLib = module.default;
+      }
+      return mermaidLib;
+    }
+
+    async function renderMermaidDiagrams() {
+      const diagrams = document.querySelectorAll('.mermaid:not(.mermaid-processed)');
+      if (diagrams.length === 0 || isRendering) return;
+
+      isRendering = true;
+      try {
+        const mermaid = await loadMermaid();
+        const isDark = getCurrentTheme() === 'dark';
+
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: isDark ? 'dark' : 'neutral',
+          darkMode: isDark,
+          htmlLabels: true,
+          themeVariables: isDark ? {
+            primaryColor: '#2b2b33',
+            primaryTextColor: '#f8f8f2',
+            primaryBorderColor: '#81A1C1',
+            lineColor: '#81A1C1',
+            secondaryColor: '#383844',
+            tertiaryColor: '#2E3440',
+            background: '#2E3440',
+            mainBkg: '#383844',
+            textColor: '#f8f8f2',
+            edgeLabelBackground: '#2b2b33',
+            nodeTextColor: '#f8f8f2'
+          } : {}
+        });
+
+        for (const el of diagrams) {
+          try {
+            const content = el.getAttribute('data-original-content') || el.textContent;
+            el.setAttribute('data-original-content', content);
+            const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const result = await mermaid.render(id, content);
+            el.innerHTML = result.svg;
+            el.classList.add('mermaid-processed');
+          } catch (err) {
+            console.error('Mermaid render error:', err);
+          }
+        }
+      } finally {
+        isRendering = false;
+      }
+    }
+
+    function resetAndRerender() {
+      document.querySelectorAll('.mermaid.mermaid-processed').forEach(el => {
+        el.classList.remove('mermaid-processed');
+        const original = el.getAttribute('data-original-content');
+        if (original) el.textContent = original;
+      });
+      renderMermaidDiagrams();
+    }
+
+    window.initMermaid = renderMermaidDiagrams;
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', renderMermaidDiagrams);
+
+    // SPA navigation: observe for new mermaid elements
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+          const hasMermaid = [...mutation.addedNodes].some(node =>
+            node.nodeType === Node.ELEMENT_NODE &&
+            (node.classList?.contains('mermaid') || node.querySelector?.('.mermaid'))
+          );
+          if (hasMermaid) {
+            renderMermaidDiagrams();
+            break;
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Theme toggle re-render
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.querySelector('#darkmode-toggle');
+      if (toggle) {
+        toggle.addEventListener('change', () => {
+          requestAnimationFrame(resetAndRerender);
+        });
+      }
+    });
+
+    // System dark mode change
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (!document.documentElement.hasAttribute('saved-theme')) {
+        requestAnimationFrame(resetAndRerender);
+      }
+    });
+  </script>
+  <!-- Webmentions -->
+  {{ partial "webmentions" . }}
+  <script src="/brain/webmention.js" async></script>
+
+  {{ $externalLinks := resources.Get "js/external-links.js" | resources.Fingerprint "md5" | resources.Minify }}
+  <script src="{{$externalLinks.Permalink}}"></script>
+
+  <!-- Replaced with GoatCounter -->
+  <!-- <!-1- Google tag (gtag.js) -1-> -->
+  <!-- Lightbox expand component -->
+  {{ $lightbox := resources.Get "js/lightbox.js" | resources.Fingerprint "md5" }}
+  <script src="{{ $lightbox.Permalink }}" defer></script>
+</head>

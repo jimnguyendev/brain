@@ -1,0 +1,29 @@
+name: jimnguyendev
+website: https://jimnguyendev.github.io/brain/
+enableToc: true
+openToc: true
+enableLinkPreview: true
+enableLatex: true
+enableCodeBlockTitle: true
+enableCodeBlockCopy: true
+enableCallouts: true
+enableSPA: true
+enableFooter: true
+enableContextualBacklinks: true
+enableRecentNotes: true
+enableGitHubEdit: false
+GitHubLink: https://github.com/jimnguyendev/brain/tree/hugo/content
+newsletter_link: ""
+enableSemanticSearch: false
+enableGoatCounter: false
+goatCounterUser: "" #add your GoatCounter here, see https://www.goatcounter.com/help/start
+operandApiKey: "REPLACE-WITH-YOUR-OPERAND-API-KEY"
+description: "Bộ não thứ hai công khai của tôi — một digital garden ghi lại và kết nối những gì tôi học được, lấy cảm hứng từ Zettelkasten."
+brain_icon: 'brain-icon.svg'
+data_engineering_icon: 'data-engineering-icon.svg'
+page_title: '<span class="title-text">Second Brain</span>'
+# page_title: "🧠 Second Brain"
+
+links:
+  - link_name: Github
+    link: https://github.com/jimnguyendev

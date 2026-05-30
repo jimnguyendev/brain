@@ -1,0 +1,42 @@
+baseURL = "https://jimnguyendev.github.io/brain/"  # theme assumes the site lives under /brain/ (hardcoded in header.html / router.js). For GitHub Pages, name the published repo `brain`, or use a custom domain serving /brain/.
+locale = "en-us"
+googleAnalytics = ""
+relativeURLs = false
+disablePathToLower = true
+disableAliases = true #as blanks are not handled and e.g. "OLAP Cubes" will create two aliases OLAP and Cubes and break the actual note "olap"
+# ignoreFiles = [
+#     "/content/templates/*",
+#     "/content/private/*",
+# ]
+summaryLength = 20
+enableGitInfo = true
+
+[markup]
+    [markup.tableOfContents]
+        endLevel = 3
+        ordered = true
+        startLevel = 2
+    [markup.highlight]
+        noClasses = false
+        anchorLineNos = false
+        codeFences = true
+        guessSyntax = true
+        hl_Lines = ""
+        lineAnchors = ""
+        lineNoStart = 1
+        lineNos = true
+        lineNumbersInTable = true
+        style = "dracula"
+    [frontmatter]
+        lastmod = ["lastmod", ":git", "date", "publishDate"]
+        publishDate = ["publishDate", "date"]
+    [markup.goldmark.renderer]
+        unsafe = true
+        hardWraps = true # this will handle line breaks correctly when uploading to HTML (without the need to add double space at the end of a line)
+[params]
+  # site default theme ("light", "dark", "auto")
+  defaultTheme = "dark"
+  # author name
+  author = "Jim Nguyen"
+  authorUrl = "https://github.com/jimnguyendev"
+  recentNotes = 13 #notes for SecondBrain

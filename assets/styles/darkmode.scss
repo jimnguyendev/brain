@@ -1,0 +1,144 @@
+.darkmode {
+  min-width: 30px;
+  float: right;
+  padding: 0.5em;
+  position: relative;
+
+  @media all and (max-width: 450px) {
+    padding: 0.7em;
+  }
+
+  & > .toggle {
+    display: none;
+    box-sizing: border-box;
+  }
+
+  & svg {
+    opacity: 0;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: calc(50% - 10px);
+    margin: 0 7px;
+    fill: var(--gray);
+    transition: opacity 0.1s ease;
+  }
+}
+
+.newsletter {
+  float: right;
+  // padding: 1em;
+  min-width: 30px;
+  position: relative;
+
+  @media all and (max-width: 450px) {
+    padding: 1em;
+  }
+
+  & > .toggle {
+    display: none;
+    box-sizing: border-box;
+  }
+
+  & svg {
+    opacity: 1;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: calc(50% - 10px);
+    margin: 0 7px;
+    transition: opacity 0.1s ease;
+  }
+  
+}
+
+.toggle:checked ~ label {
+  & > #dayIcon {
+    opacity: 0;
+  }
+  & > #nightIcon {
+    opacity: 1;
+  }
+}
+
+.toggle:not(:checked) ~ label {
+  & > #dayIcon {
+    opacity: 1;
+  }
+  & > #nightIcon {
+    opacity: 0;
+  }
+}
+
+// for navigation: blog and vault
+.icon-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    padding: 0 5px;
+    margin-right: 10px;
+    
+    &::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Chrome/Safari/Opera */
+    }
+}
+
+.nav-item {
+    margin-right: 12px;
+    white-space: nowrap;
+    
+    &:last-child {
+        margin-right: 0;
+    }
+
+    @media all and (max-width: 768px) {
+        margin-right: 8px;
+    }
+}
+
+.icon-links a {
+    color: var(--gray) !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    transition: color 0.2s ease, transform 0.2s ease;
+    
+    &:hover {
+        color: var(--secondary) !important;
+        transform: translateY(-2px);
+    }
+    
+    svg {
+        margin-right: 6px;
+        min-width: 20px;
+
+        @media all and (max-width: 768px) {
+            margin-right: 0;
+        }
+    }
+}
+
+[saved-theme="dark"] .icon-links a {
+    color: var(--gray) !important;
+    
+    &:hover {
+        color: var(--secondary) !important;
+    }
+    
+    svg {
+        stroke: var(--gray);
+    }
+}
+
+.nav-text {
+    font-size: 14px;
+    font-weight: 500;
+    
+    @media all and (max-width: 768px) {
+        display: none;
+    }
+}

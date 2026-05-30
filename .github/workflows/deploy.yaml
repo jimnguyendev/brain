@@ -1,0 +1,110 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - hugo
+  workflow_dispatch:
+
+# Allow the GITHUB_TOKEN to deploy to Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment, cancel in-progress runs
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HUGO_VERSION: 0.161.1
+      # NOTE: the theme hardcodes the `/brain/` path (header link, router.js SPA
+      # checks). For URLs to resolve on GitHub Pages, publish this from a repo
+      # named `brain` (-> https://<user>.github.io/brain/) or a custom domain.
+      BASE_URL: https://jimnguyendev.github.io/brain/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history for .GitInfo / .Lastmod
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install hugo-obsidian
+        run: go install github.com/jackyzha0/hugo-obsidian@latest
+
+      - name: Build link & content indices
+        run: hugo-obsidian -input=content -output=assets/indices -index=true -root=.
+
+      - name: Lowercase link index
+        run: python3 utils/lower_case.py || true
+
+      # Remove notes marked `private: true` from the search/graph indices BEFORE
+      # Hugo builds, and emit .private-pages.txt for the StatiCrypt step below.
+      - name: Strip private pages from indices
+        run: python3 utils/strip_private.py
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: ${{ env.HUGO_VERSION }}
+          extended: true
+
+      - name: Build
+        run: hugo --gc --minify --enableGitInfo --baseURL "${{ env.BASE_URL }}"
+
+      # Encrypt each private page in place with a single shared password (client-side
+      # AES via StatiCrypt). The password is a repo secret; the salt is fixed so the
+      # "Remember me" box stays valid across deploys.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Encrypt private pages (StatiCrypt)
+        env:
+          STATICRYPT_PASSWORD: ${{ secrets.STATICRYPT_PASSWORD }}
+        run: |
+          if [ ! -s .private-pages.txt ]; then
+            echo "No private pages to encrypt."; exit 0
+          fi
+          if [ -z "$STATICRYPT_PASSWORD" ]; then
+            echo "::error::Secret STATICRYPT_PASSWORD is not set — private pages would ship UNENCRYPTED."; exit 1
+          fi
+          SALT=8d74bb7e23de07b2756a973b239b81f0
+          while IFS= read -r slug || [ -n "$slug" ]; do
+            [ -z "$slug" ] && continue
+            f="public${slug}/index.html"
+            if [ -f "$f" ]; then
+              npx --yes staticrypt@latest "$f" -p "$STATICRYPT_PASSWORD" --short -s "$SALT" -d "public${slug}"
+              echo "encrypted: $f"
+            else
+              echo "::warning::expected private page not found: $f"
+            fi
+          done < .private-pages.txt
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

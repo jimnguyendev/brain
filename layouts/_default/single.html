@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="{{ .Lang }}">
+{{ partial "head.html" . }}
+
+<body>
+{{partial "search.html" .}}
+<div class="singlePage">
+    <!-- Begin actual content -->
+    <article class="h-entry">
+    {{partial "header.html" .}}
+
+      {{if not .Params.hideTitle}}
+      {{if .Title}}<h1 class="p-name">{{ .Title }}</h1>{{end}}
+      {{end}}
+      <p class="meta">
+          {{if not .Params.hideLastUpdate}}
+          <span class="meta-label-full">Cập nhật lần cuối</span><span class="meta-label-short">Cập nhật:</span> <time class="dt-published" datetime="{{ .Lastmod.Format "2006-01-02T15:04:05-07:00" }}">{{ partial "date-fmt.html" .}}</time>
+          <span style="display: none;">by <a href="{{ $.Site.Params.authorUrl | default "https://github.com/jimnguyendev" }}" class="p-author h-card">{{ $.Site.Params.author | default "Jim Nguyen" }}</a></span>
+          {{- if .Params.createddate }} · <span class="meta-label-full">Ngày tạo</span><span class="meta-label-short">Tạo:</span> <time datetime="{{ .Params.createddate }}">{{ (time .Params.createddate).Format "02/01/2006" }}</time>
+          {{- end -}}
+          {{end}}
+          <!-- {{ partial "github.html" . }} -->
+      </p>
+      <ul class="tags">
+          {{ range (.GetTerms "tags") }}
+          <li><a href="{{ .Permalink }}">{{ .LinkTitle }}</a></li>
+          {{ end }}
+      </ul>
+      {{partial "toc.html" .}}
+
+      {{- /* Hacker News Banner */ -}}
+      {{- with .Params.hackernews -}}
+      <div class="article-hackernews-banner">
+          <span class="hn-icon">🔶</span>
+          Featured on Hacker News. <a href="{{ . }}" target="_blank" rel="noopener">Read the comments</a>
+      </div>
+      {{- end -}}
+
+      {{partial "textprocessing.html" . }}
+      {{partial "footer.html" .}}
+    </article>
+    {{if not .Params.hideBacklinks}}
+    <div class="backlinks-container">
+        {{partial "backlinks.html" .}}
+    </div>
+    {{end}}
+    
+    {{if not .Params.hideWebmentions}}
+    <div id="webmentions"></div>
+    {{end}}
+</div>
+</body>
+
+</html>

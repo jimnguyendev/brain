@@ -1,0 +1,20 @@
+.DS_Store
+public
+resources
+.idea
+content/.obsidian
+# content/*
+# !content/_index.md
+assets/indices/linkIndex.json
+assets/indices/contentIndex.json
+linkmap
+node_modules
+.quartz-cache
+.last_purge_time
+
+# Claude private work area (memory, notes, scratch) — not published
+.claude-work
+
+# StatiCrypt private-page pipeline (generated/transient artifacts)
+.private-pages.txt
+.staticrypt.json

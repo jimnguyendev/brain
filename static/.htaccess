@@ -1,0 +1,18 @@
+RewriteEngine On
+
+# Redirect renamed brain articles to new URL
+# List all renames below manually
+RewriteRule ^onetable/?$ https://www.ssp.sh/brain/xtable [R=301,L]
+RewriteRule ^data-engineering-blogs/?$ https://www.ssp.sh/brain/data-engineering-blogs-newsletters [R=301,L]
+RewriteRule ^big-cloud-vendors/?$ https://www.ssp.sh/brain/cloud-data-provider [R=301,L]
+RewriteRule ^learning-in-public/?$ https://www.ssp.sh/brain/learn-in-public [R=301,L]
+RewriteRule ^write-from-the-heart/?$ https://www.ssp.sh/brain/writing-from-the-heart [R=301,L]
+RewriteRule ^data-engineering-vault/?$ https://www.ssp.sh/brain/data-engineering [R=301,L]
+RewriteRule ^data-engineering-blogs-newsletters?/?$ https://www.ssp.sh/brain/data-engineering-blogs-and-newsletters [R=301,L]
+RewriteRule ^plaintext-files?/?$ https://www.ssp.sh/brain/plain-text-files [R=301,L]
+RewriteRule ^computer-desk-setup-todays-office?/?$ https://www.ssp.sh/brain/computer-desk-setup-monitor-workflow [R=301,L]
+RewriteRule ^the-ordinary-life?/?$ https://www.ssp.sh/brain/the-ordinary-boring-life [R=301,L]
+
+# redirect old article URL to new
+RewriteCond %{HTTP_HOST} ^ssp\.sh$
+RewriteRule ^(.*)$ https://www.ssp.sh/brain/$1 [R=301,L]

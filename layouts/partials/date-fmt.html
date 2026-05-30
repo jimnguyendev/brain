@@ -1,0 +1,7 @@
+{{if .Date}}
+{{.Date.Format "02/01/2006"}}
+{{else if .Lastmod}}
+{{.Lastmod.Format "02/01/2006"}}
+{{else}}
+Không rõ
+{{end}}
